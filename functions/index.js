@@ -12,15 +12,16 @@ app.use(cors({origin: true}));
 const db = admin.firestore();
 
 /* ---------------------------*/
+// this is needed to obtain the correct body for the validateSignature function
 app.use(bodyParser.json());
-
 /* ---------------------------*/
 app.post("/webhookTestCatching", async (req, res) => {
   if (validateSignature(req.headers["petzi-signature"], req.rawBody)) {
     console.log("Signature is valid");
     const writeResult = await db
         .collection("webhookPetzi")
-        .add({ticketInfo: req.body,
+        .doc(req.body.details.ticket.number)
+        .set({ticketInfo: req.body,
           ticketNumber: req.body.details.ticket.number});
     console.log("wrote result here:", writeResult.id);
     res.status(200).send("Webhook received successfully");
