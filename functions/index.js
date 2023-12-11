@@ -1,78 +1,61 @@
 /* eslint-disable require-jsdoc */
 const functions = require("firebase-functions");
+const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
-const express = require("express");
-const cors = require("cors");
-const crypto = require("crypto");
 const bodyParser = require("body-parser");
+const {PubSub} = require("@google-cloud/pubsub");
+const messageConsumer = require("./messageConsumer");
+const validateSignature = require("./validateSignature");
+
 
 admin.initializeApp(functions.config().firebase);
-const app = express();
-app.use(cors({origin: true}));
 const db = admin.firestore();
 
+const pubsub = new PubSub();
+const webhookPetziPubSubName = "projects/codepetzi/topics/webhookPetzi";
+
+const express = require("express");
+const cors = require("cors");
+const app = express();
+app.use(cors({origin: true}));
 /* ---------------------------*/
 // this is needed to obtain the correct body for the validateSignature function
 app.use(bodyParser.json());
 /* ---------------------------*/
 app.post("/webhookTestCatching", async (req, res) => {
-  if (validateSignature(req.headers["petzi-signature"], req.rawBody)) {
+  const ticketNumber = req.body.details.ticket.number;
+  /* ----------------This vv section cover the receiving of the webhook, and writing it to the firestore-----------*/
+  if (validateSignature.validateSignature(req.headers["petzi-signature"], req.rawBody)) {
     console.log("Signature is valid");
     const writeResult = await db
         .collection("webhookPetzi")
-        .doc(req.body.details.ticket.number)
+        .doc(ticketNumber)
         .set({ticketInfo: req.body,
-          ticketNumber: req.body.details.ticket.number});
+          ticketNumber: ticketNumber});
     console.log("wrote result here:", writeResult.id);
-    res.status(200).send("Webhook received successfully");
+    logger.log("wrote result here:", writeResult.id);
   } else {
     console.log("Signature is invalid");
     res
         .status(200)
-        .send("Webhook received successfully," + " but the signature is invalid");
+        .send("Webhook received successfully, but the signature is invalid");
   }
+
+  try {
+    logger.log("Starting pubsub section");
+    const dataBuffer = Buffer.from(JSON.stringify({ticketNumber: ticketNumber}));
+    const messageID = await pubsub.topic(webhookPetziPubSubName).publishMessage({data: dataBuffer});
+    logger.log("Message sent to pubsub", messageID);
+
+    res.status(200).send("Message published successfully");
+  } catch (error) {
+    console.error("Could not publish message:", error);
+    res.status(500).send("Publishing message to pubsub failed. Please retry when it's working");
+  }
+  /* ----------------------------^^-------------------------------------*/
 });
 
-// eslint-disable-next-line max-len
-const secret = "queenQuartet";
-
-function validateSignature(signature, body) {
-  // this is creating the parts that's needed
-  // signatureValues.t is the timestamp
-  // signatureValues.v1 is the signature
-  const signatureParts = signature.split(",");
-  const signatureValues = {};
-  signatureParts.forEach((part) => {
-    const [key, value] = part.split("=");
-    signatureValues[key] = value;
-  });
-
-  // this first check if the signature is older than 30 seconds
-  const now = Date.now() / 1000; // in seconds
-  // the base date.now() give us the time in milliseconds, where as
-  // t in the header is in seconds, so we divide by 1000
-  if (now - signatureValues.t > 30) {
-    // the signature is valid for 30 seconds
-    // after that, we can immediately reject it,
-    // the code does not need to run further
-    return false;
-  }
-
-  // then we check the actual signature itself
-  // eslint-disable-next-line max-len
-  const signatureBase =`${signatureValues.t}.${body}`;
-
-  console.log(signatureBase);
-  const expectedSignature = crypto
-      .createHmac("sha256", secret)
-      .update(signatureBase)
-      .digest("hex");
-  console.log("Real signature", signatureValues.v1);
-  console.log("expectedSignature", expectedSignature);
-  return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature, "utf-8"),
-      Buffer.from(signatureValues.v1, "utf-8"),
-  );
-}
+exports.messageConsumer = messageConsumer.consumeMessage2;
 
 exports.webhook = functions.https.onRequest(app);
+
