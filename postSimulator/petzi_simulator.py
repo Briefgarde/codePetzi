@@ -26,13 +26,14 @@ def make_header(body, secret):
 
 def make_post_request(url, data, secret):
     try:
-        # Make the POST request
-        response = requests.post(url, data=data, headers=make_header(data, secret))
+        for i in range(10):
+            # Make the POST request
+            response = requests.post(url, data=data, headers=make_header(data, secret))
 
-        if response.status_code == 200:
-            print(f"Request successful. Response: {response.text}")
-        else:
-            print(f"Request failed with status code {response.status_code}.")
+            if response.status_code == 200:
+               print(f"Request successful. Response: {response.text}")
+            else:
+               print(f"Request failed with status code {response.status_code}.")
     except Exception as e:
         print(f"An error occurred: {e}")
 

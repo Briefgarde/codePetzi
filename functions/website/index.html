@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h1 id="data">Counter: 0 Messages: </h1>
+  <div id="counter"></div>
+
+  <script>
+    const source = new EventSource('/events');
+
+    source.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      document.getElementById('counter').textContent = data.count;
+      document.getElementById('data').textContent = data.message;
+    };
+  </script>
+</body>
+</html>
