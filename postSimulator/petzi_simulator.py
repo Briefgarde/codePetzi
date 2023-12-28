@@ -24,9 +24,9 @@ def make_header(body, secret):
     return headers
 
 
-def make_post_request(url, data, secret):
+def make_post_request(url, data, secret, runcount):
     try:
-        for i in range(10):
+        for i in range(runcount):
             # Make the POST request
             response = requests.post(url, data=data, headers=make_header(data, secret))
 
@@ -44,6 +44,8 @@ if __name__ == "__main__":
     parser.add_argument("url", type=str, help="URL to send the POST request to")
     parser.add_argument("secret", nargs='?', type=str, help="secret shared between your server and petzi simulator",
                         default="secret")
+    parser.add_argument("runcount", nargs='?', type=int, help="Number of time to simulate the POST call",
+                        default=1)
 
     # Parse the command line arguments
     args = parser.parse_args()
@@ -90,4 +92,4 @@ if __name__ == "__main__":
         }'''
 
     # Make the POST request
-    make_post_request(args.url, data, args.secret)
+    make_post_request(args.url, data, args.secret, args.runcount)
