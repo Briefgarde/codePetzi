@@ -19,7 +19,7 @@ let count = 0;
 const messageHandler = (message) => {
   count += 1;
   clients.forEach((res) =>
-    res.write(`data: ${JSON.stringify({count, message: message.data.toString()})}\n\n`),
+    res.write(`data: ${JSON.stringify({count: count, message: message.data.toString()})}\n\n`),
   );
   message.ack();
 };

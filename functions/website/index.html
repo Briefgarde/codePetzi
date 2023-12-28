@@ -1,16 +1,23 @@
 <!DOCTYPE html>
 <html>
 <body>
-  <h1 id="data">Counter: 0 Messages: </h1>
-  <div id="counter"></div>
+  <h1 id="counter"></h1>
+  <ul id="messageList">
+    
+  </ul>
 
   <script>
+    
     const source = new EventSource('/events');
-
     source.onmessage = function(event) {
       const data = JSON.parse(event.data);
       document.getElementById('counter').textContent = data.count;
-      document.getElementById('data').textContent = data.message;
+      // Create a new li element
+      var li = document.createElement('li');
+      // Set its text content to the message
+      li.textContent = data.message;
+      // Append it to the ul element
+      document.getElementById('messageList').appendChild(li);
     };
   </script>
 </body>
