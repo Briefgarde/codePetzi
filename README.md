@@ -36,7 +36,7 @@ The project is structured as follows:
         - The URL for the webhook catcher
             - If you use the base Firebase, it is https://us-central1-codepetzi.cloudfunctions.net/webhook/webhookTestCatching
         - The secret code 
-            - The base secret is "queenQuarter". Note the minuscule at the start. 
+            - The base secret is "queenQuartet". Note the minuscule at the start. 
         - The number of time you'd like the POST call to be made. 
 4. This website very simply display a counter for every message it receive while it is active. It is not intented to display any more advanced statistics. 
 
