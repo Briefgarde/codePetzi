@@ -10,12 +10,14 @@
     
     const source = new EventSource('/events');
     source.onmessage = function(event) {
+      //console.log(event.data);
       const data = JSON.parse(event.data);
       document.getElementById('counter').textContent = data.count;
       // Create a new li element
       var li = document.createElement('li');
       // Set its text content to the message
-      li.textContent = data.message;
+      console.log(data.message);
+      li.textContent = data.message.details.buyer.firstName + ' ' + data.message.details.buyer.lastName + ' bought for ' + data.message.details.ticket.price.amount + '€';
       // Append it to the ul element
       document.getElementById('messageList').appendChild(li);
     };
