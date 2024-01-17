@@ -2,24 +2,27 @@
 <html>
 <body>
   <h1 id="counter"></h1>
+  <h2 id="total"></h2>
   <ul id="messageList">
     
   </ul>
 
   <script>
-    
+    var total = 0;
     const source = new EventSource('/events');
     source.onmessage = function(event) {
-      //console.log(event.data);
+      //cons ole.log(event.data);
       const data = JSON.parse(event.data);
       document.getElementById('counter').textContent = data.count;
       // Create a new li element
       var li = document.createElement('li');
       // Set its text content to the message
       console.log(data.message);
-      li.textContent = data.message.details.buyer.firstName + ' ' + data.message.details.buyer.lastName + ' bought for ' + data.message.details.ticket.price.amount + '€';
+      li.textContent = data.message.details.buyer.firstName + ' ' + data.message.details.buyer.lastName + ' bought for ' + data.message.details.ticket.price.amount +data.message.details.ticket.price.currency;
       // Append it to the ul element
       document.getElementById('messageList').appendChild(li);
+      total += Number.parseFloat(data.message.details.ticket.price.amount);
+      document.getElementById('total').textContent = 'Total: ' + total + 'CHF';
     };
   </script>
 </body>
